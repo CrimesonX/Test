@@ -1,14 +1,2 @@
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/CrimesonX/Test/refs/heads/main/Gui"))()
 
--- ===========================
---     DESTINY HUB 
--- ===========================
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local UserInputService = game:GetService("UserInputService")
-local StarterGui = game:GetService("StarterGui")
-local CoreGui = game:GetService("CoreGui")
-local LocalPlayer = Players.LocalPlayer
-
-local Window = Library.CreateLib("   Destiny Hub", "DarkTheme")
-
