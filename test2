@@ -1,0 +1,380 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/xHeptc/Kavo-UI-Library/main/source.lua"))()
+
+-- ===========================
+--     DESTINY HUB 
+-- ===========================
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local StarterGui = game:GetService("StarterGui")
+local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
+
+local Window = Library.CreateLib("   Destiny Hub", "DarkTheme")
+
+-- ===[ INJECT LOGO เข้า Title Bar ]===
+task.wait(0.3)
+
+local KavoGui = CoreGui:FindFirstChild("Kavo UI") 
+    or LocalPlayer.PlayerGui:FindFirstChild("Kavo UI")
+
+if KavoGui then
+    local function findBar(parent)
+        for _, v in pairs(parent:GetDescendants()) do
+            if v:IsA("Frame") and (v.Name == "TopBar" or v.Name == "Bar" or v.Name == "DragBar") then
+                return v
+            end
+        end
+    end
+
+    local bar = findBar(KavoGui)
+
+    if bar then
+        local Logo = Instance.new("ImageLabel")
+        Logo.Name = "DestinyLogo"
+        Logo.Size = UDim2.new(0, 30, 0, 30)
+        Logo.Position = UDim2.new(0, 6, 0.5, -15)
+        Logo.BackgroundTransparency = 1
+        Logo.Image = "rbxassetid://YOUR_ASSET_ID" -- << ใส่ Asset ID ของรูปคุณ
+        Logo.ImageColor3 = Color3.fromRGB(255, 255, 255)
+        Logo.ZIndex = 10
+        Logo.Parent = bar
+
+        local Glow = Instance.new("ImageLabel")
+        Glow.Size = UDim2.new(0, 50, 0, 50)
+        Glow.Position = UDim2.new(0, -4, 0.5, -25)
+        Glow.BackgroundTransparency = 1
+        Glow.Image = "rbxassetid://5028857084"
+        Glow.ImageColor3 = Color3.fromRGB(120, 80, 255)
+        Glow.ImageTransparency = 0.4
+        Glow.ZIndex = 9
+        Glow.Parent = bar
+
+        task.spawn(function()
+            local t = 0
+            while Logo and Logo.Parent do
+                t = t + 0.05
+                Glow.ImageTransparency = 0.3 + math.sin(t) * 0.15
+                task.wait(0.03)
+            end
+        end)
+    end
+end
+
+-- ===[ RAINBOW TITLE EFFECT ]===
+task.spawn(function()
+    local hue = 0
+    while task.wait(0.05) do
+        hue = (hue + 0.005) % 1
+        local color = Color3.fromHSV(hue * 0.2 + 0.65, 0.8, 1)
+        local gui = CoreGui:FindFirstChild("Kavo UI") or LocalPlayer.PlayerGui:FindFirstChild("Kavo UI")
+        if gui then
+            for _, v in pairs(gui:GetDescendants()) do
+                if v:IsA("TextLabel") and v.Text:find("Destiny Hub") then
+                    v.TextColor3 = color
+                end
+            end
+        end
+    end
+end)
+
+-- ===[ NOTIFICATION เมื่อเปิด ]===
+task.wait(1)
+StarterGui:SetCore("SendNotification", {
+    Title = "⚔️ Destiny Hub",
+    Text = "✅ โหลดสำเร็จ! ยินดีต้อนรับ",
+    Duration = 4,
+})
+
+-- ==================
+--   TAB: PLAYER
+-- ==================
+local PlayerTab = Window:NewTab("⚡ Player")
+
+local ParrySection = PlayerTab:NewSection("🛡️ Auto Parry")
+
+ParrySection:NewToggle("Auto Parry", "Parry อัตโนมัติ", function(state)
+    _G.AutoParry = state
+    StarterGui:SetCore("SendNotification", {
+        Title = "Auto Parry",
+        Text = state and "✅ เปิดแล้ว" or "❌ ปิดแล้ว",
+        Duration = 2,
+    })
+end)
+
+ParrySection:NewSlider("Parry Delay (ms)", "ปรับ delay", 300, 0, function(val)
+    _G.ParryDelay = val
+end)
+
+ParrySection:NewToggle("Perfect Parry", "Parry แม่นยำ", function(state)
+    _G.PerfectParry = state
+end)
+
+local MovementSection = PlayerTab:NewSection("🏃 Movement")
+
+MovementSection:NewToggle("Speed Hack", "เพิ่มความเร็ว", function(state)
+    _G.SpeedOn = state
+    local char = LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        char.Humanoid.WalkSpeed = state and (_G.SpeedVal or 50) or 16
+    end
+end)
+
+MovementSection:NewSlider("Walk Speed", "ปรับความเร็ว", 200, 16, function(val)
+    _G.SpeedVal = val
+    if _G.SpeedOn then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.WalkSpeed = val
+        end
+    end
+end)
+
+MovementSection:NewToggle("Infinite Jump", "กระโดดไม่จำกัด", function(state)
+    _G.InfJump = state
+end)
+
+UserInputService.JumpRequest:Connect(function()
+    if _G.InfJump then
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- ==================
+--   TAB: COMBAT
+-- ==================
+local CombatTab = Window:NewTab("⚔️ Combat")
+
+local AimSection = CombatTab:NewSection("🎯 Aimbot")
+
+AimSection:NewToggle("Aimbot", "ล็อค aim อัตโนมัติ", function(state)
+    _G.Aimbot = state
+end)
+
+AimSection:NewSlider("Aimbot Range", "ระยะ aimbot", 500, 50, function(val)
+    _G.AimbotRange = val
+end)
+
+AimSection:NewDropdown("Target Part", "เลือก hitbox", {"Head", "Torso", "HumanoidRootPart"}, function(opt)
+    _G.AimbotTarget = opt
+end)
+
+local CombatMods = CombatTab:NewSection("💥 Combat Mods")
+
+CombatMods:NewToggle("Auto Attack", "โจมตีอัตโนมัติ", function(state)
+    _G.AutoAtk = state
+end)
+
+CombatMods:NewToggle("No Cooldown", "ไม่มี cooldown", function(state)
+    _G.NoCd = state
+end)
+
+CombatMods:NewSlider("Hitbox Size", "ขยาย hitbox ของศัตรู", 20, 1, function(val)
+    _G.HitboxSize = val
+    if _G.HitboxOn then
+        for _, p in pairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer and p.Character then
+                local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then hrp.Size = Vector3.new(val, val, val) end
+            end
+        end
+    end
+end)
+
+-- ==================
+--   TAB: VISUAL + ESP
+-- ==================
+local VisualTab = Window:NewTab("👁️ Visual")
+
+-- ===[ ESP SYSTEM ]===
+local ESPFolder = Instance.new("Folder")
+ESPFolder.Name = "DestinyESP"
+ESPFolder.Parent = CoreGui
+
+local function CreateESP(player)
+    if player == LocalPlayer then return end
+
+    local function onCharacter(character)
+        local old = ESPFolder:FindFirstChild(player.Name)
+        if old then old:Destroy() end
+
+        local container = Instance.new("Folder")
+        container.Name = player.Name
+        container.Parent = ESPFolder
+
+        local humanoid = character:WaitForChild("Humanoid", 5)
+        local hrp = character:WaitForChild("HumanoidRootPart", 5)
+        if not humanoid or not hrp then return end
+
+        -- BillboardGui
+        local billboard = Instance.new("BillboardGui")
+        billboard.AlwaysOnTop = true
+        billboard.Size = UDim2.new(0, 60, 0, 90)
+        billboard.StudsOffset = Vector3.new(0, 3, 0)
+        billboard.Adornee = hrp
+        billboard.Enabled = false
+        billboard.Parent = container
+
+        -- Box
+        local box = Instance.new("Frame")
+        box.Size = UDim2.new(1, 0, 1, 0)
+        box.BackgroundTransparency = 1
+        box.Parent = billboard
+
+        local uiStroke = Instance.new("UIStroke")
+        uiStroke.Color = _G.ESPColor or Color3.fromRGB(170, 0, 255)
+        uiStroke.Thickness = 1.5
+        uiStroke.Parent = box
+
+        -- Name
+        local nameLabel = Instance.new("TextLabel")
+        nameLabel.Size = UDim2.new(1, 0, 0, 16)
+        nameLabel.Position = UDim2.new(0, 0, -0.22, 0)
+        nameLabel.BackgroundTransparency = 1
+        nameLabel.TextColor3 = _G.ESPColor or Color3.fromRGB(170, 0, 255)
+        nameLabel.TextStrokeTransparency = 0
+        nameLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        nameLabel.Font = Enum.Font.GothamBold
+        nameLabel.TextSize = 12
+        nameLabel.Text = player.Name
+        nameLabel.Parent = billboard
+
+        -- HP Bar BG
+        local hpBarBG = Instance.new("Frame")
+        hpBarBG.Size = UDim2.new(0, 5, 1, 0)
+        hpBarBG.Position = UDim2.new(-0.12, 0, 0, 0)
+        hpBarBG.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        hpBarBG.BorderSizePixel = 0
+        hpBarBG.Parent = billboard
+
+        -- HP Bar
+        local hpBar = Instance.new("Frame")
+        hpBar.Size = UDim2.new(1, 0, 1, 0)
+        hpBar.AnchorPoint = Vector2.new(0, 1)
+        hpBar.Position = UDim2.new(0, 0, 1, 0)
+        hpBar.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+        hpBar.BorderSizePixel = 0
+        hpBar.Parent = hpBarBG
+
+        -- Distance
+        local distLabel = Instance.new("TextLabel")
+        distLabel.Size = UDim2.new(1, 0, 0, 14)
+        distLabel.Position = UDim2.new(0, 0, 1.05, 0)
+        distLabel.BackgroundTransparency = 1
+        distLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        distLabel.TextStrokeTransparency = 0
+        distLabel.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
+        distLabel.Font = Enum.Font.Gotham
+        distLabel.TextSize = 10
+        distLabel.Text = "0m"
+        distLabel.Parent = billboard
+
+        -- Update Loop
+        task.spawn(function()
+            while container and container.Parent do
+                task.wait(0.05)
+
+                local espOn = _G.ESP == true
+                billboard.Enabled = espOn
+
+                if not espOn then continue end
+
+                local col = _G.ESPColor or Color3.fromRGB(170, 0, 255)
+                uiStroke.Color = col
+                nameLabel.TextColor3 = col
+                nameLabel.Visible = _G.ESPNames ~= false
+                hpBarBG.Visible = _G.ESPHealth ~= false
+
+                if humanoid and humanoid.Parent then
+                    local pct = humanoid.Health / math.max(humanoid.MaxHealth, 1)
+                    hpBar.Size = UDim2.new(1, 0, pct, 0)
+                    hpBar.BackgroundColor3 = Color3.fromRGB(
+                        math.floor(255 * (1 - pct)),
+                        math.floor(255 * pct),
+                        50
+                    )
+                end
+
+                local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                if myHRP and hrp and hrp.Parent then
+                    distLabel.Text = math.floor((myHRP.Position - hrp.Position).Magnitude) .. "m"
+                else
+                    distLabel.Text = "?"
+                end
+            end
+        end)
+
+        humanoid.Died:Connect(function()
+            task.wait(2)
+            if container then container:Destroy() end
+        end)
+    end
+
+    if player.Character then
+        task.spawn(onCharacter, player.Character)
+    end
+    player.CharacterAdded:Connect(onCharacter)
+end
+
+for _, p in pairs(Players:GetPlayers()) do
+    task.spawn(CreateESP, p)
+end
+
+Players.PlayerAdded:Connect(CreateESP)
+
+Players.PlayerRemoving:Connect(function(p)
+    local old = ESPFolder:FindFirstChild(p.Name)
+    if old then old:Destroy() end
+end)
+
+-- ESP UI
+local ESPSection = VisualTab:NewSection("🔍 ESP")
+
+ESPSection:NewToggle("Player ESP", "แสดง Box + ชื่อ + HP + ระยะ", function(state)
+    _G.ESP = state
+    StarterGui:SetCore("SendNotification", {
+        Title = "ESP",
+        Text = state and "✅ ESP เปิดแล้ว" or "❌ ESP ปิดแล้ว",
+        Duration = 2,
+    })
+end)
+
+ESPSection:NewToggle("Show Names", "แสดงชื่อผู้เล่น", function(state)
+    _G.ESPNames = state
+end)
+
+ESPSection:NewToggle("Show HP Bar", "แสดงแถบ HP", function(state)
+    _G.ESPHealth = state
+end)
+
+ESPSection:NewColorPicker("ESP Color", "เลือกสี Box และชื่อ", function(col)
+    _G.ESPColor = col
+end)
+
+-- ==================
+--   TAB: SETTINGS
+-- ==================
+local SettingsTab = Window:NewTab("⚙️ Settings")
+
+local ConfigSection = SettingsTab:NewSection("💾 Config")
+
+ConfigSection:NewButton("💾 Save Config", "บันทึกการตั้งค่า", function()
+    StarterGui:SetCore("SendNotification", {
+        Title = "Destiny Hub", Text = "💾 บันทึก Config แล้ว!", Duration = 3
+    })
+end)
+
+ConfigSection:NewButton("📂 Load Config", "โหลดการตั้งค่า", function()
+    StarterGui:SetCore("SendNotification", {
+        Title = "Destiny Hub", Text = "📂 โหลด Config แล้ว!", Duration = 3
+    })
+end)
+
+SettingsTab:NewSection("ℹ️ About"):NewLabel("Destiny Hub v2.0 | by You")
+
+SettingsTab:NewSection("🚪 Exit"):NewButton("❌ Destroy GUI", "ปิด GUI", function()
+    Library.Destroy()
+end)
